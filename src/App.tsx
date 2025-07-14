@@ -15,6 +15,7 @@ import Premium from './pages/Premium';
 import Success from './pages/Success';
 import CoverLetterPage from './pages/CoverLetterPage';
 import Account from './pages/Account';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Component to handle page tracking
 const PageTracker: React.FC = () => {
@@ -28,6 +29,7 @@ function App() {
       <Router>
         <ScrollToTop />
         <PageTracker />
+        <PWAInstallPrompt />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
