@@ -259,22 +259,17 @@ const Dashboard: React.FC = () => {
         }
       }
 
-      // Filter analysis types to only include non-premium ones for the API call
-      const allowedAnalysisTypes = dashboardState.selectedAnalysisTypes.filter(type => 
-        !analysisOptions.find(option => option.id === type)?.isPremium
-      );
-
       // No existing analysis found, proceed with new AI analysis
       const result = await analyzeResume(
         dashboardState.resumeText, 
         needsJobDescription ? dashboardState.jobDescription : '', 
-        allowedAnalysisTypes.filter(type => type !== 'job_match_analysis') // Remove job_match_analysis as it's always included
+        dashboardState.selectedAnalysisTypes.filter(type => type !== 'job_match_analysis') // Remove job_match_analysis as it's always included
       );
       updateState({ analysisResult: result });
 
       // Track analysis completion
       const score = getNumericScore(result.match_score);
-      trackResumeAnalysis(allowedAnalysisTypes.join(','), score);
+      trackResumeAnalysis(dashboardState.selectedAnalysisTypes.join(','), score);
 
       // Save the new analysis with hashes for future deduplication
       if (needsJobDescription) {
@@ -525,13 +520,6 @@ const Dashboard: React.FC = () => {
                         </p>
                       </div>
                     </label>
-                    {option.isPremium && (
-                      <div className="absolute inset-0 bg-gray-100 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded border">
-                          Premium Feature
-                        </span>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -540,7 +528,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs sm:text-sm text-blue-800 flex items-start space-x-2">
                   <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <span>
-                    <strong>Tip:</strong> Select multiple options for comprehensive analysis. Premium features will be available after upgrading.
+                    <strong>Tip:</strong> Select multiple options for comprehensive analysis. All analysis features are now free!
                   </span>
                 </p>
               </div>
@@ -816,6 +804,84 @@ const Dashboard: React.FC = () => {
                             <li key={index} className="flex items-start space-x-2">
                               <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                               <span className="text-sm text-gray-700">{statement}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {dashboardState.analysisResult.skills_gap_assessment && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 mr-2" />
+                      Skills Gap Assessment ({dashboardState.analysisResult.skills_gap_assessment.score}/10)
+                      {dashboardState.analysisResult.skills_gap_assessment.score < 7 && (
+                        <span className="ml-2 text-orange-600">📚 Skills to develop</span>
+                      )}
+                    </h4>
+                    <p className="text-sm sm:text-base text-gray-700 mb-3">{dashboardState.analysisResult.skills_gap_assessment.summary}</p>
+                    {dashboardState.analysisResult.skills_gap_assessment.missing_skills.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-gray-900 text-sm">Missing Skills:</h5>
+                        <ul className="space-y-1">
+                          {dashboardState.analysisResult.skills_gap_assessment.missing_skills.map((skill, index) => (
+                            <li key={index} className="flex items-start space-x-2">
+                              <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{skill}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {dashboardState.analysisResult.format_optimization && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 mr-2" />
+                      Format Optimization ({dashboardState.analysisResult.format_optimization.score}/10)
+                      {dashboardState.analysisResult.format_optimization.score < 7 && (
+                        <span className="ml-2 text-orange-600">📝 Format needs work</span>
+                      )}
+                    </h4>
+                    <p className="text-sm sm:text-base text-gray-700 mb-3">{dashboardState.analysisResult.format_optimization.summary}</p>
+                    {dashboardState.analysisResult.format_optimization.issues.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-gray-900 text-sm">Format Issues:</h5>
+                        <ul className="space-y-1">
+                          {dashboardState.analysisResult.format_optimization.issues.map((issue, index) => (
+                            <li key={index} className="flex items-start space-x-2">
+                              <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{issue}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {dashboardState.analysisResult.career_story_flow && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 mr-2" />
+                      Career Story Flow Analysis ({dashboardState.analysisResult.career_story_flow.score}/10)
+                      {dashboardState.analysisResult.career_story_flow.score < 7 && (
+                        <span className="ml-2 text-orange-600">📖 Story needs clarity</span>
+                      )}
+                    </h4>
+                    <p className="text-sm sm:text-base text-gray-700 mb-3">{dashboardState.analysisResult.career_story_flow.summary}</p>
+                    {dashboardState.analysisResult.career_story_flow.issues.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-gray-900 text-sm">Career Story Issues:</h5>
+                        <ul className="space-y-1">
+                          {dashboardState.analysisResult.career_story_flow.issues.map((issue, index) => (
+                            <li key={index} className="flex items-start space-x-2">
+                              <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{issue}</span>
                             </li>
                           ))}
                         </ul>
