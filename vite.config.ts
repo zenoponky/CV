@@ -75,7 +75,7 @@ export default defineConfig({
       manifest: {
         name: 'Zolla - AI Resume Analysis',
         short_name: 'Zolla',
-        description: 'AI-Powered Resume Analysis & Tailoring Platform',
+        description: 'Free AI Resume Analysis Tool & Tailoring Platform',
         theme_color: '#2563eb',
         background_color: '#f3f4f6',
         display: 'standalone',
