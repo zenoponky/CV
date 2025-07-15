@@ -70,7 +70,7 @@ export default defineConfig({
           },
         ],
         navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/auth/],
+        navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/dashboard/],
       },
       manifest: {
         name: 'Zolla - AI Resume Analysis',
