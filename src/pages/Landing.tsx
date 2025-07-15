@@ -26,7 +26,7 @@ const Landing: React.FC = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url(https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2)'
+            backgroundImage: 'url(/images/ai-resume-analysis-tool.jpg)'
           }}
         />
         
@@ -69,8 +69,7 @@ const Landing: React.FC = () => {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300"> Zolla!</span>
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">
-                Use my Free AI Resume Analysis Tool and instantly improve your ATS score to land more interviews.</p>
-                <p className="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">Upload your resume and job description to get a detailed AI-powered review—keyword matching, ATS optimization, action-driven impact tips—all for free.
+                Use my Free AI Resume Analysis Tool and instantly improve your ATS score to land more interviews.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
                 <Link
