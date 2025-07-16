@@ -627,24 +627,23 @@ const Dashboard: React.FC = () => {
               {/* Character count display */}
               <div className="flex justify-between items-center mt-2">
                 <div className="text-xs text-gray-500">
-                 Paste the complete job description including requirements, responsibilities, and qualifications (minimum 200 characters)
+                  Paste the complete job description including requirements, responsibilities, and qualifications (minimum 200 characters)
                 </div>
                 <div className={`text-xs font-medium ${
-                 dashboardState.jobDescription.length < 200
+                  dashboardState.jobDescription.length < 200
                    ? 'text-red-600'
-                   : dashboardState.jobDescription.length > 5500 
-                  dashboardState.jobDescription.length > 5500 
+                    : dashboardState.jobDescription.length > 5500 
                     ? 'text-red-600' 
                     : dashboardState.jobDescription.length > 5000 
                       ? 'text-orange-600' 
                       : 'text-gray-500'
                 }`}>
-                 {dashboardState.jobDescription.length}/6000 characters
-                 {dashboardState.jobDescription.length < 200 && (
+                  {dashboardState.jobDescription.length}/6000 characters
+                  {dashboardState.jobDescription.length < 200 && (
                    <span className="block text-red-600">
                      ({200 - dashboardState.jobDescription.length} more needed)
                    </span>
-                 )}
+                  )}
                 </div>
               </div>
             </div>
@@ -658,7 +657,7 @@ const Dashboard: React.FC = () => {
               </button>
               <button
                 onClick={handleAnalyze}
-               disabled={!dashboardState.jobDescription.trim() || dashboardState.jobDescription.length < 200 || isAnalyzing}
+                disabled={!dashboardState.jobDescription.trim() || dashboardState.jobDescription.length < 200 || isAnalyzing}
                 className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {isAnalyzing ? (
