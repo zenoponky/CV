@@ -209,6 +209,11 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+   // Validate job description length if provided
+   if (needsJobDescription && dashboardState.jobDescription.trim() && dashboardState.jobDescription.length < 200) {
+     setError('Job description must be at least 200 characters long for meaningful analysis.');
+     return;
+   }
     if (!user) {
       setError('Please sign in to analyze your resume.');
       return;
@@ -612,6 +617,7 @@ const Dashboard: React.FC = () => {
                 id="job-description"
                 value={dashboardState.jobDescription}
                 onChange={(e) => updateState({ jobDescription: e.target.value })}
+               minLength={200}
                 maxLength={6000}
                 rows={10}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
@@ -621,16 +627,24 @@ const Dashboard: React.FC = () => {
               {/* Character count display */}
               <div className="flex justify-between items-center mt-2">
                 <div className="text-xs text-gray-500">
-                  Paste the complete job description including requirements, responsibilities, and qualifications
+                 Paste the complete job description including requirements, responsibilities, and qualifications (minimum 200 characters)
                 </div>
                 <div className={`text-xs font-medium ${
+                 dashboardState.jobDescription.length < 200
+                   ? 'text-red-600'
+                   : dashboardState.jobDescription.length > 5500 
                   dashboardState.jobDescription.length > 5500 
                     ? 'text-red-600' 
                     : dashboardState.jobDescription.length > 5000 
                       ? 'text-orange-600' 
                       : 'text-gray-500'
                 }`}>
-                  {dashboardState.jobDescription.length}/6000 characters
+                 {dashboardState.jobDescription.length}/6000 characters
+                 {dashboardState.jobDescription.length < 200 && (
+                   <span className="block text-red-600">
+                     ({200 - dashboardState.jobDescription.length} more needed)
+                   </span>
+                 )}
                 </div>
               </div>
             </div>
@@ -644,7 +658,7 @@ const Dashboard: React.FC = () => {
               </button>
               <button
                 onClick={handleAnalyze}
-                disabled={!dashboardState.jobDescription.trim() || isAnalyzing}
+               disabled={!dashboardState.jobDescription.trim() || dashboardState.jobDescription.length < 200 || isAnalyzing}
                 className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {isAnalyzing ? (
