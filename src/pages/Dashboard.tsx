@@ -627,7 +627,7 @@ const Dashboard: React.FC = () => {
               {/* Character count display */}
               <div className="flex justify-between items-center mt-2">
                 <div className="text-xs text-gray-500">
-                  Paste the complete job description including requirements, responsibilities, and qualifications (minimum 200 characters)
+                  Paste job description: requirements, responsibilities, and qualifications (minimum 200 characters)
                 </div>
                 <div className={`text-xs font-medium ${
                   dashboardState.jobDescription.length < 200
