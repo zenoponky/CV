@@ -418,7 +418,8 @@ const Account: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Resume History</h2>
-            <div className="text-xs sm:text-sm text-gray-500 text-right">
+          </div>
+		  <div className="text-xs sm:text-sm text-gray-500 text-right">
               <div>Resumes are saved for 30 days</div>
               {resumeHistory.length > 0 && (
                 <div className="mt-1">
@@ -426,7 +427,6 @@ const Account: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
 
           {isLoading ? (
             <div className="text-center py-8">
@@ -584,7 +584,7 @@ const Account: React.FC = () => {
           {!isLoading && resumeHistory.length > 0 && !pagination.hasMore && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500 py-4">
-                Opps! Nothing more to show!
+                You've reached the end of your resume history
               </p>
             </div>
           )}
