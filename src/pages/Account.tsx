@@ -584,7 +584,7 @@ const Account: React.FC = () => {
           {!isLoading && resumeHistory.length > 0 && !pagination.hasMore && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500 py-4">
-                You've reached the end of your resume history
+                Opps! Nothing more to show!
               </p>
             </div>
           )}
