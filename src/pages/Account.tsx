@@ -18,15 +18,29 @@ interface ResumeAnalysis {
   created_at: string;
 }
 
+interface PaginationState {
+  currentPage: number;
+  itemsPerPage: number;
+  hasMore: boolean;
+  totalCount: number;
+}
+
 const Account: React.FC = () => {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'history'>('profile');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [resumeHistory, setResumeHistory] = useState<ResumeAnalysis[]>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    currentPage: 0,
+    itemsPerPage: 10,
+    hasMore: true,
+    totalCount: 0
+  });
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -64,27 +78,66 @@ const Account: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'history') {
-      fetchResumeHistory();
+      fetchResumeHistory(true); // Reset pagination when switching to history tab
     }
   }, [activeTab]);
 
-  const fetchResumeHistory = async () => {
+  const fetchResumeHistory = async (reset: boolean = false) => {
     if (!user) return;
 
-    setIsLoading(true);
+    if (reset) {
+      setIsLoading(true);
+      setResumeHistory([]);
+      setPagination(prev => ({ ...prev, currentPage: 0, hasMore: true }));
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
+      const startIndex = reset ? 0 : pagination.currentPage * pagination.itemsPerPage;
+      const endIndex = startIndex + pagination.itemsPerPage - 1;
+
+      // Fetch one extra item to check if there are more
       const { data, error } = await supabase
         .from('resume_analyses')
         .select('id, user_id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, analysis_details, original_resume_text, original_job_description, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+        .range(startIndex, endIndex + 1); // Fetch one extra to check for more
 
       if (error) throw error;
-      setResumeHistory(data || []);
+      
+      const items = data || [];
+      const hasMore = items.length > pagination.itemsPerPage;
+      const actualItems = hasMore ? items.slice(0, pagination.itemsPerPage) : items;
+
+      if (reset) {
+        setResumeHistory(actualItems);
+      } else {
+        setResumeHistory(prev => [...prev, ...actualItems]);
+      }
+
+      setPagination(prev => ({
+        ...prev,
+        currentPage: reset ? 1 : prev.currentPage + 1,
+        hasMore,
+        totalCount: reset ? actualItems.length : prev.totalCount + actualItems.length
+      }));
+
     } catch (err) {
       setError('Failed to load resume history');
     } finally {
-      setIsLoading(false);
+      if (reset) {
+        setIsLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && pagination.hasMore) {
+      fetchResumeHistory(false);
     }
   };
 
@@ -365,8 +418,13 @@ const Account: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Resume History</h2>
-            <div className="text-xs sm:text-sm text-gray-500">
-              Resumes are saved for 30 days
+            <div className="text-xs sm:text-sm text-gray-500 text-right">
+              <div>Resumes are saved for 30 days</div>
+              {resumeHistory.length > 0 && (
+                <div className="mt-1">
+                  Showing {resumeHistory.length} {pagination.hasMore ? 'of many' : 'total'}
+                </div>
+              )}
             </div>
           </div>
 
@@ -496,6 +554,38 @@ const Account: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Load More Button */}
+          {!isLoading && resumeHistory.length > 0 && pagination.hasMore && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 mx-auto text-sm sm:text-base"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                    <span>Loading more...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Load More</span>
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* End of Results Message */}
+          {!isLoading && resumeHistory.length > 0 && !pagination.hasMore && (
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500 py-4">
+                You've reached the end of your resume history
+              </p>
             </div>
           )}
         </div>
