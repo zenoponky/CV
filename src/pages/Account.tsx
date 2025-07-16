@@ -419,14 +419,12 @@ const Account: React.FC = () => {
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Resume History</h2>
           </div>
-		  <div className="text-xs sm:text-sm text-gray-500 text-right">
-              <div>Resumes are saved for 30 days</div>
-              {resumeHistory.length > 0 && (
-                <div className="mt-1">
-                  Showing {resumeHistory.length} {pagination.hasMore ? 'of many' : 'total'}
-                </div>
-              )}
-            </div>
+          
+          {/* Added text directly under Resume History heading */}
+          <div className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-500">
+            <div>Resumes are saved for 30 days</div>
+            <div className="mt-1">Showing 20 of many</div>
+          </div>
 
           {isLoading ? (
             <div className="text-center py-8">
@@ -584,7 +582,7 @@ const Account: React.FC = () => {
           {!isLoading && resumeHistory.length > 0 && !pagination.hasMore && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500 py-4">
-                You've reached the end of your resume history
+                Opps! Nothing more to show.
               </p>
             </div>
           )}
