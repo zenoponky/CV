@@ -609,44 +609,34 @@ const Dashboard: React.FC = () => {
               <p className="text-sm sm:text-base text-gray-600">Paste the job description you want to apply for</p>
             </div>
 
-            <div>
-              <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 mb-2">
-                Job Description
-              </label>
-              <textarea
-                id="job-description"
-                value={dashboardState.jobDescription}
-                onChange={(e) => updateState({ jobDescription: e.target.value })}
-               minLength={200}
-                maxLength={6000}
-                rows={10}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                placeholder="Paste the job description here..."
-              />
-              
-              {/* Character count display */}
-              <div className="flex justify-between items-center mt-2">
-                <div className="text-xs text-gray-500">
-                  Paste job description: requirements, responsibilities, and qualifications (minimum 200 characters)
-                </div>
-                <div className={`text-xs font-medium ${
-                  dashboardState.jobDescription.length < 200
-                   ? 'text-red-600'
-                    : dashboardState.jobDescription.length > 5500 
-                    ? 'text-red-600' 
-                    : dashboardState.jobDescription.length > 5000 
-                      ? 'text-orange-600' 
-                      : 'text-gray-500'
-                }`}>
-                  {dashboardState.jobDescription.length}/6000 characters
-                  {dashboardState.jobDescription.length < 200 && (
-                   <span className="block text-red-600">
-                     ({200 - dashboardState.jobDescription.length} more needed)
-                   </span>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Job Description Textarea */}
+<div>
+  <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 mb-2">
+    Job Description (200-6000 characters)
+  </label>
+  <textarea
+    id="job-description"
+    value={dashboardState.jobDescription}
+    onChange={(e) => updateState({ jobDescription: e.target.value })}
+    minLength={200}
+    maxLength={6000}
+    rows={10}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+    placeholder="Paste the job description here..."
+  />
+  
+  {/* Updated Character count display */}
+  <div className="flex justify-between items-center mt-1">
+    <span className="text-xs text-gray-500">
+      Minimum 200 characters required
+    </span>
+    <span className={`text-xs ${
+      dashboardState.jobDescription.length < 200 ? 'text-red-600' : 'text-gray-500'
+    }`}>
+      {dashboardState.jobDescription.length}/6000
+    </span>
+  </div>
+</div>
 
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
