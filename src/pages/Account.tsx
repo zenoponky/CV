@@ -423,7 +423,7 @@ const Account: React.FC = () => {
           {/* Added text directly under Resume History heading */}
           <div className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-500">
             <div>Resumes are saved for 30 days</div>
-            <div className="mt-1">Showing 20 of many</div>
+            <div className="mt-1">Showing {resumeHistory.length} {pagination.hasMore ? 'of many' : 'total'}</div>
           </div>
 
           {isLoading ? (
@@ -593,3 +593,4 @@ const Account: React.FC = () => {
 };
 
 export default Account;
+
