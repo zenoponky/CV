@@ -102,7 +102,7 @@ const Account: React.FC = () => {
         .from('resume_analyses')
         .select('id, user_id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, analysis_details, original_resume_text, original_job_description, created_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
         .range(startIndex, endIndex + 1); // Fetch one extra to check for more
 
       if (error) throw error;
