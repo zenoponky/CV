@@ -13,6 +13,7 @@ import TermsPrivacyModal from '../components/TermsPrivacyModal';
 const Premium: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [setError] = useState();
   const { user, refreshUserProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -304,12 +305,12 @@ const Premium: React.FC = () => {
           </div>
         </div>
       </div>
-        showToast('Payment was cancelled', 'warning');
+
       {/* Terms & Privacy Modal */}
       <TermsPrivacyModal 
         isOpen={showTermsModal} 
         onClose={() => setShowTermsModal(false)} 
-    showToast(err instanceof Error ? err.message : 'Payment failed', 'error');
+      />
     </div>
   );
 };
