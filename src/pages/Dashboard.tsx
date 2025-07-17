@@ -6,7 +6,9 @@ import { analyzeResume, AnalysisResult } from '../lib/openai';
 import { extractTextFromFile, generateSHA256Hash, toSentenceCase } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { trackResumeAnalysis, trackFileUpload } from '../lib/analytics';
-import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
+import { Upload, FileText, Brain, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
+
+const STORAGE_KEY = 'zolla_dashboard_state';
 
 interface DashboardState {
   currentStep: number;
@@ -17,92 +19,6 @@ interface DashboardState {
   analysisResult: AnalysisResult | null;
   usedCachedResult: boolean;
 }
-
-const STORAGE_KEY = 'zolla_dashboard_state';
-
-// Helper function to sanitize analysisResult
-const sanitizeAnalysisResult = (analysisResult: any): AnalysisResult => {
-  if (!analysisResult) {
-    return {
-      match_summary: '',
-      match_score: '0/100',
-      job_keywords_detected: [],
-      gaps_and_suggestions: [],
-    };
-  }
-
-  return {
-    match_summary: analysisResult.match_summary || '',
-    match_score: analysisResult.match_score || '0/100',
-    job_keywords_detected: Array.isArray(analysisResult.job_keywords_detected) 
-      ? analysisResult.job_keywords_detected 
-      : [],
-    gaps_and_suggestions: Array.isArray(analysisResult.gaps_and_suggestions) 
-      ? analysisResult.gaps_and_suggestions 
-      : [],
-    // Handle optional properties safely
-    ats_compatibility: analysisResult.ats_compatibility && typeof analysisResult.ats_compatibility === 'object' 
-      ? {
-          score: analysisResult.ats_compatibility.score || 0,
-          summary: analysisResult.ats_compatibility.summary || '',
-          issues: Array.isArray(analysisResult.ats_compatibility.issues) 
-            ? analysisResult.ats_compatibility.issues 
-            : [],
-          suggestions: Array.isArray(analysisResult.ats_compatibility.suggestions) 
-            ? analysisResult.ats_compatibility.suggestions 
-            : [],
-        } 
-      : undefined,
-    impact_statement_review: analysisResult.impact_statement_review && typeof analysisResult.impact_statement_review === 'object'
-      ? {
-          score: analysisResult.impact_statement_review.score || 0,
-          summary: analysisResult.impact_statement_review.summary || '',
-          weak_statements: Array.isArray(analysisResult.impact_statement_review.weak_statements) 
-            ? analysisResult.impact_statement_review.weak_statements 
-            : [],
-          suggestions: Array.isArray(analysisResult.impact_statement_review.suggestions) 
-            ? analysisResult.impact_statement_review.suggestions 
-            : [],
-        }
-      : undefined,
-    skills_gap_assessment: analysisResult.skills_gap_assessment && typeof analysisResult.skills_gap_assessment === 'object'
-      ? {
-          score: analysisResult.skills_gap_assessment.score || 0,
-          summary: analysisResult.skills_gap_assessment.summary || '',
-          missing_skills: Array.isArray(analysisResult.skills_gap_assessment.missing_skills) 
-            ? analysisResult.skills_gap_assessment.missing_skills 
-            : [],
-          suggestions: Array.isArray(analysisResult.skills_gap_assessment.suggestions) 
-            ? analysisResult.skills_gap_assessment.suggestions 
-            : [],
-        }
-      : undefined,
-    format_optimization: analysisResult.format_optimization && typeof analysisResult.format_optimization === 'object'
-      ? {
-          score: analysisResult.format_optimization.score || 0,
-          summary: analysisResult.format_optimization.summary || '',
-          issues: Array.isArray(analysisResult.format_optimization.issues) 
-            ? analysisResult.format_optimization.issues 
-            : [],
-          suggestions: Array.isArray(analysisResult.format_optimization.suggestions) 
-            ? analysisResult.format_optimization.suggestions 
-            : [],
-        }
-      : undefined,
-    career_story_flow: analysisResult.career_story_flow && typeof analysisResult.career_story_flow === 'object'
-      ? {
-          score: analysisResult.career_story_flow.score || 0,
-          summary: analysisResult.career_story_flow.summary || '',
-          issues: Array.isArray(analysisResult.career_story_flow.issues) 
-            ? analysisResult.career_story_flow.issues 
-            : [],
-          suggestions: Array.isArray(analysisResult.career_story_flow.suggestions) 
-            ? analysisResult.career_story_flow.suggestions 
-            : [],
-        }
-      : undefined,
-  };
-};
 
 const Dashboard: React.FC = () => {
   // Initialize state with default values
@@ -125,14 +41,10 @@ const Dashboard: React.FC = () => {
     // Check if we have initial analysis result from history
     if (location.state?.initialAnalysisResult) {
       const initialState = getInitialState();
-      
-      // Sanitize the analysisResult to ensure all required properties are present
-      const sanitizedAnalysisResult = sanitizeAnalysisResult(location.state.initialAnalysisResult);
-      
       return {
         ...initialState,
         currentStep: 4,
-        analysisResult: sanitizedAnalysisResult,
+        analysisResult: location.state.initialAnalysisResult,
         resumeText: location.state.originalResumeText || '',
         jobDescription: location.state.originalJobDescription || '',
         usedCachedResult: true
@@ -145,15 +57,10 @@ const Dashboard: React.FC = () => {
         const parsedState = JSON.parse(savedState);
         // Validate that the parsed state has the expected structure
         if (parsedState && typeof parsedState === 'object') {
-          // Sanitize parsedState if it comes from sessionStorage
-          const sanitizedParsedState: DashboardState = {
+          return {
             ...getInitialState(),
             ...parsedState,
-            analysisResult: parsedState.analysisResult 
-              ? sanitizeAnalysisResult(parsedState.analysisResult)
-              : null,
           };
-          return sanitizedParsedState;
         }
       }
     } catch (error) {
