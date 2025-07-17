@@ -6,7 +6,7 @@ import { analyzeResume, AnalysisResult } from '../lib/openai';
 import { extractTextFromFile, generateSHA256Hash, toSentenceCase } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { trackResumeAnalysis, trackFileUpload } from '../lib/analytics';
-import { Upload, FileText, Brain, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
+import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
 
 interface DashboardState {
   currentStep: number;
