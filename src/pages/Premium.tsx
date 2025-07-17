@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { processPayment } from '../lib/paystack';
 import { generateTailoredResume, generateCoverLetter, performComprehensiveAnalysis } from '../lib/openai';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/utils';
 import { trackPayment } from '../lib/analytics';
-import { CreditCard, CheckCircle, AlertCircle, Star, TrendingUp } from 'lucide-react';
+import { CreditCard, CheckCircle, Star, TrendingUp } from 'lucide-react';
 import TermsPrivacyModal from '../components/TermsPrivacyModal';
 
 const Premium: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const { user, refreshUserProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const { resumeText, jobDescription, analysisResult } = location.state || {};
 
@@ -42,7 +43,6 @@ const Premium: React.FC = () => {
     if (!user) return;
 
     setIsProcessing(true);
-    setError(null);
 
     try {
       await processPayment(
@@ -103,7 +103,7 @@ const Premium: React.FC = () => {
         },
         () => {
           setError('Payment was cancelled');
-          setIsProcessing(false);
+          showToast('Payment successful but failed to generate tailored resume' + (jobDescription ? ' and cover letter' : '') + '. Please contact support.', 'error');
         }
       );
     } catch (err) {
@@ -273,17 +273,6 @@ const Premium: React.FC = () => {
             </div>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
-              <div className="flex">
-                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0" />
-                <div className="ml-3">
-                  <p className="text-xs sm:text-sm text-red-800">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
             <button
               onClick={handlePayment}
@@ -315,12 +304,12 @@ const Premium: React.FC = () => {
           </div>
         </div>
       </div>
-
+        showToast('Payment was cancelled', 'warning');
       {/* Terms & Privacy Modal */}
       <TermsPrivacyModal 
         isOpen={showTermsModal} 
         onClose={() => setShowTermsModal(false)} 
-      />
+    showToast(err instanceof Error ? err.message : 'Payment failed', 'error');
     </div>
   );
 };

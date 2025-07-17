@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, CheckCircle, ArrowLeft, Mail } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import { ArrowLeft, Mail } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -14,9 +15,9 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const { sendPasswordResetEmail } = useAuth();
+  const { showToast } = useToast();
 
   const {
     register,
@@ -28,17 +29,16 @@ const ForgotPassword: React.FC = () => {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const { error } = await sendPasswordResetEmail(data.email);
       if (error) {
-        setError(error.message);
+        showToast(error.message, 'error');
       } else {
         setSuccess(true);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      showToast('An unexpected error occurred', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +110,6 @@ const ForgotPassword: React.FC = () => {
                     <button
                       onClick={() => {
                         setSuccess(false);
-                        setError(null);
                       }}
                       className="w-full bg-gray-200 text-gray-700 py-2.5 sm:py-3 px-4 rounded-md font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base"
                     >
@@ -121,17 +120,6 @@ const ForgotPassword: React.FC = () => {
               </div>
             ) : (
               <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
-                {error && (
-                  <div className="bg-red-50 border-2 border-red-300 rounded-md p-3 sm:p-4 shadow-sm">
-                    <div className="flex">
-                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
-                      <div className="ml-3">
-                        <p className="text-xs sm:text-sm text-red-800 font-medium">{error}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email address

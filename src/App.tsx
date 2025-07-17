@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { usePageTracking } from './hooks/useAnalytics';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from './components/Layout';
@@ -26,69 +27,71 @@ const PageTracker: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <PageTracker />
-        <PWAInstallPrompt />
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/premium" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Premium />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/success" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Success />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/cover-letter" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <CoverLetterPage />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/account" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Account />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+      <ToastProvider>
+        <Router>
+          <ScrollToTop />
+          <PageTracker />
+          <PWAInstallPrompt />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/premium" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Premium />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/success" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Success />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cover-letter" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CoverLetterPage />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/account" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Account />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

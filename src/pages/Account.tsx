@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp, MoreVertical,ArrowRight } from 'lucide-react';
+import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, TrendingUp, MoreVertical, ArrowRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DeleteAccountModal from '../components/DeleteAccountModal';
 
 interface ResumeAnalysis {
   id: string;
@@ -32,8 +34,7 @@ const Account: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [resumeHistory, setResumeHistory] = useState<ResumeAnalysis[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     currentPage: 0,
@@ -50,6 +51,7 @@ const Account: React.FC = () => {
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -125,7 +127,7 @@ const Account: React.FC = () => {
       }));
 
     } catch (err) {
-      setError('Failed to load resume history');
+      showToast('Failed to load resume history', 'error');
     } finally {
       if (reset) {
         setIsLoading(false);
@@ -146,8 +148,6 @@ const Account: React.FC = () => {
     if (!user) return;
 
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const { error } = await supabase
@@ -162,15 +162,55 @@ const Account: React.FC = () => {
       if (error) throw error;
 
       await refreshUserProfile();
-      setSuccess('Profile updated successfully!');
-      setTimeout(() => setSuccess(null), 3000);
+      showToast('Profile updated successfully!', 'success');
     } catch (err) {
-      setError('Failed to update profile');
+      showToast('Failed to update profile', 'error');
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    try {
+      // Get the current session to get the access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session found');
+      }
+
+      // Call the delete-user Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
+
+      // Account deleted successfully
+      showToast('Account deleted successfully', 'success');
+      
+      // Sign out and redirect to login
+      await supabase.auth.signOut();
+      navigate('/login', { state: { message: 'account_deleted' } });
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Failed to delete account. Please try again.',
+        'error'
+      );
+    } finally {
+      setShowDeleteModal(false);
+    }
+  };
   const handleViewResume = (analysis: ResumeAnalysis) => {
     setOpenDropdownId(null); // Close dropdown
     if (analysis.tailored_resume && analysis.tailored_resume.trim()) {
@@ -294,29 +334,6 @@ const Account: React.FC = () => {
         </div>
       </div>
 
-      {/* Error/Success Messages */}
-      {error && (
-        <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
-          <div className="flex">
-            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0" />
-            <div className="ml-3">
-              <p className="text-xs sm:text-sm text-red-800">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-md p-3 sm:p-4">
-          <div className="flex">
-            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 flex-shrink-0" />
-            <div className="ml-3">
-              <p className="text-xs sm:text-sm text-green-800">{success}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
@@ -393,11 +410,27 @@ const Account: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              {/* Delete Account Section */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 w-full sm:w-auto">
+                <h3 className="text-sm font-semibold text-red-800 mb-2">Danger Zone</h3>
+                <p className="text-xs text-red-700 mb-3">
+                  Permanently delete your account and all associated data.
+                </p>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="bg-red-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center space-x-2 text-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete Account</span>
+                </button>
+              </div>
+
+              {/* Save Button */}
               <button
                 type="submit"
                 disabled={isSaving}
-                className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm sm:text-base"
+                className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
               >
                 {isSaving ? (
                   <>
@@ -588,6 +621,13 @@ const Account: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 };
