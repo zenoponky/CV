@@ -4,9 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../lib/supabase';
-import { Eye, EyeOff, CheckCircle, Key, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, CheckCircle, Key, Loader2 } from 'lucide-react';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -23,11 +22,11 @@ const ResetPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { showToast } = useToast();
 
   const {
     register,
@@ -44,22 +43,22 @@ const ResetPassword: React.FC = () => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          showToast('Invalid or expired reset link. Please request a new password reset.', 'error');
+          setError('Invalid or expired reset link. Please request a new password reset.');
           setIsValidSession(false);
         } else if (session && session.user) {
           // Check if this is a recovery session (from password reset email)
           if (session.user.aud === 'authenticated') {
             setIsValidSession(true);
           } else {
-            showToast('Invalid session type. Please use the link from your password reset email.', 'error');
+            setError('Invalid session type. Please use the link from your password reset email.');
             setIsValidSession(false);
           }
         } else {
-          showToast('No active session found. Please use the link from your password reset email.', 'error');
+          setError('No active session found. Please use the link from your password reset email.');
           setIsValidSession(false);
         }
       } catch (err) {
-        showToast('Failed to validate session. Please try again.', 'error');
+        setError('Failed to validate session. Please try again.');
         setIsValidSession(false);
       } finally {
         setIsValidating(false);
@@ -67,15 +66,16 @@ const ResetPassword: React.FC = () => {
     };
 
     validateSession();
-  }, [showToast]);
+  }, []);
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     if (!isValidSession) {
-      showToast('Invalid session. Please use the link from your password reset email.', 'error');
+      setError('Invalid session. Please use the link from your password reset email.');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -83,7 +83,7 @@ const ResetPassword: React.FC = () => {
       });
 
       if (error) {
-        showToast(error.message, 'error');
+        setError(error.message);
       } else {
         setSuccess(true);
         // Redirect to login after a short delay
@@ -92,7 +92,7 @@ const ResetPassword: React.FC = () => {
         }, 3000);
       }
     } catch (err) {
-      showToast('An unexpected error occurred while updating your password.', 'error');
+      setError('An unexpected error occurred while updating your password.');
     } finally {
       setIsLoading(false);
     }
@@ -168,10 +168,11 @@ const ResetPassword: React.FC = () => {
               </div>
             ) : !isValidSession ? (
               <div className="text-center space-y-4">
+                <AlertCircle className="h-12 w-12 sm:h-16 sm:w-16 text-red-500 mx-auto" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Invalid Reset Link</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    This password reset link is invalid or has expired. Please request a new one.
+                    {error || 'This password reset link is invalid or has expired. Please request a new one.'}
                   </p>
                   <div className="space-y-3">
                     <Link
@@ -191,6 +192,17 @@ const ResetPassword: React.FC = () => {
               </div>
             ) : (
               <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
+                {error && (
+                  <div className="bg-red-50 border-2 border-red-300 rounded-md p-3 sm:p-4 shadow-sm">
+                    <div className="flex">
+                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                      <div className="ml-3">
+                        <p className="text-xs sm:text-sm text-red-800 font-medium">{error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3 sm:space-y-4">
                   <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">

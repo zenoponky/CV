@@ -4,8 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
 import { trackUserRegistration } from '../lib/analytics';
 import TermsPrivacyModal from '../components/TermsPrivacyModal';
 
@@ -25,10 +24,10 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const { showToast } = useToast();
 
   const {
     register,
@@ -40,11 +39,12 @@ const Signup: React.FC = () => {
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
+    setError(null);
 
     try {
       const { error } = await signUp(data.email, data.password);
       if (error) {
-        showToast(error.message, 'error');
+        setError(error.message);
       } else {
         // Track successful registration
         trackUserRegistration('email');
@@ -53,7 +53,7 @@ const Signup: React.FC = () => {
         navigate('/login', { state: { message: 'signup_success' } });
       }
     } catch (err) {
-      showToast('An unexpected error occurred', 'error');
+      setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -61,18 +61,19 @@ const Signup: React.FC = () => {
 
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
+    setError(null);
 
     try {
       const { error } = await signInWithGoogle();
       if (error) {
-        showToast(error.message, 'error');
+        setError(error.message);
       }
       
       // Track Google sign up attempt (success will be handled by OAuth redirect)
       trackUserRegistration('google');
       // Note: Navigation will be handled by the OAuth redirect
     } catch (err) {
-      showToast('An unexpected error occurred with Google sign up', 'error');
+      setError('An unexpected error occurred with Google sign up');
     } finally {
       setIsGoogleLoading(false);
     }
@@ -122,6 +123,17 @@ const Signup: React.FC = () => {
 
           <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
             <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
+              {error && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-md p-3 sm:p-4 shadow-sm">
+                  <div className="flex">
+                    <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                    <div className="ml-3">
+                      <p className="text-xs sm:text-sm text-red-800 font-medium">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 import { analyzeResume, AnalysisResult } from '../lib/openai';
 import { extractTextFromFile, generateSHA256Hash, toSentenceCase } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { trackResumeAnalysis, trackFileUpload } from '../lib/analytics';
-import { Upload, FileText, Brain, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
+import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
 
 const STORAGE_KEY = 'zolla_dashboard_state';
 
@@ -72,7 +71,7 @@ const Dashboard: React.FC = () => {
   const [dashboardState, setDashboardState] = useState<DashboardState>(loadState);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { showToast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   // Clear location state after loading to prevent re-initialization
   useEffect(() => {
@@ -104,6 +103,7 @@ const Dashboard: React.FC = () => {
       console.warn('Failed to clear dashboard state from sessionStorage:', error);
     }
     setDashboardState(getInitialState());
+    setError(null);
     // Reset the file input
     const fileInput = document.getElementById('resume-upload') as HTMLInputElement;
     if (fileInput) {
@@ -169,6 +169,7 @@ const Dashboard: React.FC = () => {
     if (!file) return;
 
     setIsUploading(true);
+    setError(null);
     updateState({ fileName: file.name });
 
     try {
@@ -178,7 +179,7 @@ const Dashboard: React.FC = () => {
       // Track file upload
       trackFileUpload(file.type, file.size);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to process file', 'error');
+      setError(err instanceof Error ? err.message : 'Failed to process file');
       updateState({ fileName: null });
     } finally {
       setIsUploading(false);
@@ -187,6 +188,7 @@ const Dashboard: React.FC = () => {
 
   const handleRemoveFile = () => {
     updateState({ fileName: null, resumeText: '' });
+    setError(null);
     // Reset the file input
     const fileInput = document.getElementById('resume-upload') as HTMLInputElement;
     if (fileInput) {
@@ -196,28 +198,29 @@ const Dashboard: React.FC = () => {
 
   const handleAnalyze = async () => {
     if (!dashboardState.resumeText.trim()) {
-      showToast('Please provide your resume text.', 'error');
+      setError('Please provide your resume text.');
       return;
     }
 
     // Check if job description is required
     const needsJobDescription = dashboardState.selectedAnalysisTypes.includes('job_match_analysis');
     if (needsJobDescription && !dashboardState.jobDescription.trim()) {
-      showToast('Please provide the job description for job match analysis.', 'error');
+      setError('Please provide the job description for job match analysis.');
       return;
     }
 
    // Validate job description length if provided
    if (needsJobDescription && dashboardState.jobDescription.trim() && dashboardState.jobDescription.length < 200) {
-     showToast('Job description must be at least 200 characters long for meaningful analysis.', 'error');
+     setError('Job description must be at least 200 characters long for meaningful analysis.');
      return;
    }
     if (!user) {
-      showToast('Please sign in to analyze your resume.', 'error');
+      setError('Please sign in to analyze your resume.');
       return;
     }
 
     setIsAnalyzing(true);
+    setError(null);
     updateState({ usedCachedResult: false });
 
     try {
@@ -296,7 +299,7 @@ const Dashboard: React.FC = () => {
 
       updateState({ currentStep: 4 });
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to analyze resume', 'error');
+      setError(err instanceof Error ? err.message : 'Failed to analyze resume');
     } finally {
       setIsAnalyzing(false);
     }
@@ -999,6 +1002,18 @@ const Dashboard: React.FC = () => {
           <span className="text-xs sm:text-sm text-gray-600">Results</span>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
+          <div className="flex">
+            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0" />
+            <div className="ml-3">
+              <p className="text-xs sm:text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Step Content */}
       <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
