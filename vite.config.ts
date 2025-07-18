@@ -70,10 +70,10 @@ export default defineConfig({
           },
         ],
         navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/dashboard/,/^\/account/,/^\/success/,/^\/premium/,/^\/reset-password/],
+        navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/dashboard/,/^\/account/,/^\/success/,/^\/premium/,/^\/reset-password/,/^\/signup/,/^\/login/],
       },
       manifest: {
-        name: 'Zolla - AI Resume Analysis',
+        name: 'Zolla - Free AI Resume Analysis Tool',
         short_name: 'Zolla',
         description: 'Free AI Resume Analysis Tool & Tailoring Platform',
         theme_color: '#2563eb',
