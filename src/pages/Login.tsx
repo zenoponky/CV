@@ -45,6 +45,9 @@ const Login: React.FC = () => {
         case 'signup_success':
           setSuccessMessage('Account created successfully! Please check your email to verify your account and sign in.');
           break;
+        case 'account_deleted':
+          setSuccessMessage(location.state.customMessage || 'Your account has been successfully deleted.');
+          break;
         default:
           break;
       }

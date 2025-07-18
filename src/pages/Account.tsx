@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp, MoreVertical,ArrowRight } from 'lucide-react';
+import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp, MoreVertical, ArrowRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DeleteAccountModal from '../components/DeleteAccountModal';
 
 interface ResumeAnalysis {
   id: string;
@@ -32,6 +33,8 @@ const Account: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [resumeHistory, setResumeHistory] = useState<ResumeAnalysis[]>([]);
@@ -168,6 +171,49 @@ const Account: React.FC = () => {
       setError('Failed to update profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async (confirmEmail: string) => {
+    if (!user) return;
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ confirmEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
+
+      // Account deleted successfully, redirect to login
+      navigate('/login', { 
+        state: { 
+          message: 'account_deleted',
+          customMessage: 'Your account has been successfully deleted.' 
+        } 
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      throw err; // Re-throw to let the modal handle it
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -410,6 +456,28 @@ const Account: React.FC = () => {
               </button>
             </div>
           </form>
+
+          {/* Danger Zone */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-semibold text-red-600 mb-4 flex items-center">
+              <Trash2 className="h-5 w-5 mr-2" />
+              Danger Zone
+            </h3>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
+              <h4 className="font-medium text-red-800 mb-2">Delete Account</h4>
+              <p className="text-sm text-red-700 mb-4">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                disabled={isDeleting}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Delete Account</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -588,9 +656,17 @@ const Account: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        userEmail={user?.email || ''}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
 
 export default Account;
-
