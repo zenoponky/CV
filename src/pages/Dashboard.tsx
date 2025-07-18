@@ -111,56 +111,78 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Check if job match analysis is selected
+  const isJobMatchSelected = dashboardState.selectedAnalysisTypes.includes('job_match_analysis');
+
   const analysisOptions = [
     {
       id: 'job_match_analysis',
       label: 'Job Match Analysis',
       description: 'Core compatibility scoring and keyword matching',
       isPremium: false,
-      isCore: true
+      isCore: true,
+      disabled: false
     },
     {
       id: 'ats_compatibility',
       label: 'ATS Compatibility Check',
       description: 'Check if your resume passes automated screening',
       isPremium: false,
-      isCore: false
+      isCore: false,
+      disabled: false
     },
     {
       id: 'impact_statement_review',
       label: 'Impact Statement Review',
       description: 'Identify weak accomplishments and achievements',
       isPremium: false,
-      isCore: false
+      isCore: false,
+      disabled: false
     },
     {
       id: 'skills_gap_assessment',
       label: 'Skills Gap Assessment',
       description: 'Compare your skills to job requirements',
       isPremium: false,
-      isCore: false
+      isCore: false,
+      disabled: !isJobMatchSelected // Disabled if job match analysis is not selected
     },
     {
       id: 'format_optimization',
       label: 'Format Optimization',
       description: 'Review resume formatting and structure',
       isPremium: false,
-      isCore: false
+      isCore: false,
+      disabled: false
     },
     {
       id: 'career_story_flow',
       label: 'Career Story Flow Analysis',
       description: 'Analyze career progression narrative',
       isPremium: false,
-      isCore: false
+      isCore: false,
+      disabled: false
     }
   ];
 
   const handleAnalysisTypeChange = (analysisType: string) => {
+    let newSelectedTypes;
+    
+    if (dashboardState.selectedAnalysisTypes.includes(analysisType)) {
+      // Removing the analysis type
+      newSelectedTypes = dashboardState.selectedAnalysisTypes.filter(type => type !== analysisType);
+      
+      // If removing job_match_analysis, also remove skills_gap_assessment
+      if (analysisType === 'job_match_analysis') {
+        newSelectedTypes = newSelectedTypes.filter(type => type !== 'skills_gap_assessment');
+      }
+    } else {
+      // Adding the analysis type
+      newSelectedTypes = [...dashboardState.selectedAnalysisTypes, analysisType];
+    }
+    
     updateState({
-      selectedAnalysisTypes: dashboardState.selectedAnalysisTypes.includes(analysisType)
-        ? dashboardState.selectedAnalysisTypes.filter(type => type !== analysisType)
-        : [...dashboardState.selectedAnalysisTypes, analysisType]
+      selectedAnalysisTypes: newSelectedTypes
     });
   };
 
@@ -386,8 +408,6 @@ const Dashboard: React.FC = () => {
     return { total, details: issues };
   };
 
-  const isJobMatchSelected = dashboardState.selectedAnalysisTypes.includes('job_match_analysis');
-
   const renderStep = () => {
     switch (dashboardState.currentStep) {
       case 1:
@@ -497,13 +517,15 @@ const Dashboard: React.FC = () => {
                     <label className={`flex items-start space-x-3 p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${
                       dashboardState.selectedAnalysisTypes.includes(option.id)
                         ? 'border-purple-300 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-200 hover:bg-purple-25'
+                        : option.disabled
+                          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                          : 'border-gray-200 hover:border-purple-200 hover:bg-purple-25'
                     } ${option.isPremium ? 'opacity-75' : ''}`}>
                       <input
                         type="checkbox"
                         checked={dashboardState.selectedAnalysisTypes.includes(option.id)}
                         onChange={() => handleAnalysisTypeChange(option.id)}
-                        disabled={option.isPremium}
+                        disabled={option.isPremium || option.disabled}
                         className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded disabled:opacity-50"
                       />
                       <div className="flex-1 min-w-0">
@@ -519,9 +541,19 @@ const Dashboard: React.FC = () => {
                               Core
                             </span>
                           )}
+                          {option.disabled && option.id === 'skills_gap_assessment' && (
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                              Requires Job Match Analysis
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs sm:text-sm text-gray-600 mt-1">
                           {option.description}
+                          {option.disabled && option.id === 'skills_gap_assessment' && (
+                            <span className="block text-orange-600 mt-1">
+                              This option requires "Job Match Analysis" to be selected first.
+                            </span>
+                          )}
                         </p>
                       </div>
                     </label>
@@ -1024,3 +1056,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
