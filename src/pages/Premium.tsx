@@ -47,7 +47,7 @@ const Premium: React.FC = () => {
     try {
       await processPayment(
         user.email!,
-        2500,
+        1500,
         async (reference) => {
           try {
             // Perform comprehensive analysis with all premium features
@@ -86,7 +86,7 @@ const Premium: React.FC = () => {
             // Note: Removed the is_premium update - users pay per resume generation
             
             // Track successful payment
-            trackPayment(2500, 'NGN');
+            trackPayment(1500, 'NGN');
             
             navigate('/success', { 
               state: { 
@@ -251,7 +251,7 @@ const Premium: React.FC = () => {
             </h3>
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-                {formatCurrency(2500)}
+                {formatCurrency(1500)}
               </div>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Per {jobDescription && jobDescription.trim().length > 0 ? 'tailored resume & cover letter' : 'optimized resume'} package
@@ -304,7 +304,7 @@ const Premium: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim().length > 0 ? ' & Cover Letter' : ''} - {formatCurrency(2500)}</span>
+                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim().length > 0 ? ' & Cover Letter' : ''} - {formatCurrency(1500)}</span>
                 </>
               )}
             </button>
