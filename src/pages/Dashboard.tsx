@@ -247,11 +247,11 @@ const Dashboard: React.FC = () => {
 
     try {
       // Generate hashes for deduplication (only if job description is provided)
-      let resumeHash = '';
-      let jobDescriptionHash = '';
+      // Always generate resume hash for deduplication and history
+      const resumeHash = await generateSHA256Hash(dashboardState.resumeText);
+      let jobDescriptionHash = null;
       
       if (needsJobDescription) {
-        resumeHash = await generateSHA256Hash(dashboardState.resumeText);
         jobDescriptionHash = await generateSHA256Hash(dashboardState.jobDescription);
 
         // Check for existing analysis with same content hashes
@@ -284,6 +284,37 @@ const Dashboard: React.FC = () => {
           setIsAnalyzing(false);
           return;
         }
+      } else {
+        // For analyses without job description, check for existing analysis with same resume hash and null job description
+        const { data: existingAnalysis, error: queryError } = await supabase
+          .from('resume_analyses')
+          .select('compatibility_score, keyword_matches, experience_gaps, skill_gaps, analysis_details')
+          .eq('user_id', user.id)
+          .eq('resume_hash', resumeHash)
+          .is('job_description_hash', null)
+          .limit(1)
+          .maybeSingle();
+
+        if (!queryError && existingAnalysis !== null) {
+          // Use cached result
+          const cachedResult: AnalysisResult = existingAnalysis.analysis_details || {
+            match_summary: "This analysis was retrieved from your previous general resume analysis.",
+            match_score: `${existingAnalysis.compatibility_score}/100`,
+            job_keywords_detected: existingAnalysis.keyword_matches.map(keyword => ({
+              keyword,
+              status: 'Present' as const
+            })),
+            gaps_and_suggestions: existingAnalysis.experience_gaps
+          };
+
+          updateState({ 
+            analysisResult: cachedResult, 
+            usedCachedResult: true, 
+            currentStep: 4 
+          });
+          setIsAnalyzing(false);
+          return;
+        }
       }
 
       // No existing analysis found, proceed with new AI analysis
@@ -298,26 +329,24 @@ const Dashboard: React.FC = () => {
       const score = getNumericScore(result.match_score);
       trackResumeAnalysis(dashboardState.selectedAnalysisTypes.join(','), score);
 
-      // Save the new analysis with hashes for future deduplication
-      if (needsJobDescription) {
-        const numericScore = getNumericScore(result.match_score);
-        const presentKeywords = result.job_keywords_detected
-          .filter(item => item.status === 'Present')
-          .map(item => item.keyword);
+      // Save the new analysis with hashes for future deduplication (always save regardless of job description)
+      const numericScore = getNumericScore(result.match_score);
+      const presentKeywords = result.job_keywords_detected
+        .filter(item => item.status === 'Present')
+        .map(item => item.keyword);
 
-        await supabase.from('resume_analyses').insert({
-          user_id: user.id,
-          compatibility_score: numericScore,
-          keyword_matches: presentKeywords,
-          experience_gaps: result.gaps_and_suggestions,
-          skill_gaps: [], // Empty array as new format combines all gaps
-          resume_hash: resumeHash,
-          job_description_hash: jobDescriptionHash,
-          analysis_details: result,
-          original_resume_text: dashboardState.resumeText,
-          original_job_description: needsJobDescription ? dashboardState.jobDescription : null,
-        });
-      }
+      await supabase.from('resume_analyses').insert({
+        user_id: user.id,
+        compatibility_score: numericScore,
+        keyword_matches: presentKeywords,
+        experience_gaps: result.gaps_and_suggestions,
+        skill_gaps: [], // Empty array as new format combines all gaps
+        resume_hash: resumeHash,
+        job_description_hash: jobDescriptionHash, // Will be null if no job description
+        analysis_details: result,
+        original_resume_text: dashboardState.resumeText,
+        original_job_description: needsJobDescription ? dashboardState.jobDescription : null,
+      });
 
       updateState({ currentStep: 4 });
     } catch (err) {
