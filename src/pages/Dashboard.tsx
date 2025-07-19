@@ -642,13 +642,18 @@ const Dashboard: React.FC = () => {
                     handleAnalyze();
                   }
                 }}
-                disabled={dashboardState.selectedAnalysisTypes.length === 0}
+                disabled={dashboardState.selectedAnalysisTypes.length === 0 || isAnalyzing}
                 className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {isJobMatchSelected ? (
                   <>
                     <span>Next: Add Job Description</span>
                     <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </>
+                ) : isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                    <span>Analyzing...</span>
                   </>
                 ) : (
                   <>
