@@ -19,7 +19,7 @@ const Premium: React.FC = () => {
 
   const { resumeText, jobDescription, analysisResult } = location.state || {};
 
-  if (!resumeText || !jobDescription) {
+  if (!resumeText) {
     navigate('/dashboard');
     return null;
   }
@@ -66,7 +66,7 @@ const Premium: React.FC = () => {
             
             // Only generate cover letter if job description is available
             let coverLetterResult = null;
-            if (jobDescription && jobDescription.trim()) {
+            if (jobDescription && jobDescription.trim().length > 0) {
               coverLetterResult = await generateCoverLetter(resumeText, jobDescription, comprehensiveAnalysis);
             }
             
@@ -162,7 +162,7 @@ const Premium: React.FC = () => {
                   <strong>Tailored Resume:</strong> AI-optimized resume specifically for this job
                 </span>
               </li>
-              {jobDescription && jobDescription.trim() && (
+              {jobDescription && jobDescription.trim().length > 0 && (
                 <li className="flex items-start space-x-2 sm:space-x-3">
                   <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <span className="text-sm sm:text-base text-gray-700">
@@ -173,13 +173,19 @@ const Premium: React.FC = () => {
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Keyword Optimization:</strong> Include all relevant keywords from the job description
+                  <strong>Keyword Optimization:</strong> {jobDescription && jobDescription.trim().length > 0 
+                    ? 'Include all relevant keywords from the job description'
+                    : 'Optimize with industry-standard keywords and terminology'
+                  }
                 </span>
               </li>
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Content Enhancement:</strong> Reorder and enhance sections for maximum impact
+                  <strong>Content Enhancement:</strong> {jobDescription && jobDescription.trim().length > 0
+                    ? 'Reorder and enhance sections to match role requirements'
+                    : 'Reorder and enhance sections for maximum impact and readability'
+                  }
                 </span>
               </li>
               <li className="flex items-start space-x-2 sm:space-x-3">
@@ -197,7 +203,7 @@ const Premium: React.FC = () => {
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Improvement Summary:</strong> See all the changes and enhancements made{jobDescription && jobDescription.trim() ? ' to both documents' : ' to your resume'}
+                  <strong>Improvement Summary:</strong> See all the changes and enhancements made{jobDescription && jobDescription.trim().length > 0 ? ' to both documents' : ' to your resume'}
                 </span>
               </li>
             </ul>
@@ -248,7 +254,7 @@ const Premium: React.FC = () => {
                 {formatCurrency(2500)}
               </div>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
-                Per tailored resume{jobDescription && jobDescription.trim() ? ' & cover letter' : ''} package
+                Per {jobDescription && jobDescription.trim().length > 0 ? 'tailored resume & cover letter' : 'optimized resume'} package
               </p>
               
               <div className="space-y-3 sm:space-y-4">
@@ -266,7 +272,7 @@ const Premium: React.FC = () => {
 
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-3 sm:p-4">
                   <p className="text-xs sm:text-sm text-gray-700">
-                    <strong>Complete Package:</strong> Resume{jobDescription && jobDescription.trim() ? ' + Cover Letter' : ''} + Improvements
+                    <strong>Complete Package:</strong> Resume{jobDescription && jobDescription.trim().length > 0 ? ' + Cover Letter' : ''} + Improvements
                   </p>
                 </div>
               </div>
@@ -298,7 +304,7 @@ const Premium: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim() ? ' & Cover Letter' : ''} - {formatCurrency(2500)}</span>
+                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim().length > 0 ? ' & Cover Letter' : ''} - {formatCurrency(2500)}</span>
                 </>
               )}
             </button>

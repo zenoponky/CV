@@ -254,11 +254,15 @@ export const generateTailoredResume = async (
     throw new Error('OpenAI API key not configured');
   }
 
+  const hasJobDescription = jobDescription && jobDescription.trim().length > 0;
+
   // Build enhanced prompt based on analysis results
   let enhancedInstructions = '';
   
   if (analysisResult) {
-    enhancedInstructions += '\n\nBased on the comprehensive analysis, please address the following specific issues:\n';
+    enhancedInstructions += hasJobDescription 
+      ? '\n\nBased on the comprehensive analysis, please address the following specific issues:\n'
+      : '\n\nBased on the comprehensive analysis, please optimize the resume by addressing the following areas:\n';
     
     // ATS Compatibility improvements
     if (analysisResult.ats_compatibility) {
@@ -289,7 +293,9 @@ export const generateTailoredResume = async (
       enhancedInstructions += `\n\nSKILLS GAPS (Score: ${analysisResult.skills_gap_assessment.score}/10):`;
       enhancedInstructions += `\n- ${analysisResult.skills_gap_assessment.summary}`;
       if (analysisResult.skills_gap_assessment.missing_skills.length > 0) {
-        enhancedInstructions += `\n- Address these missing skills: ${analysisResult.skills_gap_assessment.missing_skills.join(', ')}`;
+        enhancedInstructions += hasJobDescription 
+          ? `\n- Address these missing skills: ${analysisResult.skills_gap_assessment.missing_skills.join(', ')}`
+          : `\n- Consider highlighting these skills if you have them: ${analysisResult.skills_gap_assessment.missing_skills.join(', ')}`;
       }
       if (analysisResult.skills_gap_assessment.suggestions.length > 0) {
         enhancedInstructions += `\n- Implement these suggestions: ${analysisResult.skills_gap_assessment.suggestions.join(', ')}`;
@@ -320,8 +326,8 @@ export const generateTailoredResume = async (
       }
     }
 
-    // Missing keywords
-    if (analysisResult.job_keywords_detected) {
+    // Missing keywords (only if job description was provided)
+    if (hasJobDescription && analysisResult.job_keywords_detected) {
       const missingKeywords = analysisResult.job_keywords_detected
         .filter(item => item.status === 'Missing')
         .map(item => item.keyword);
@@ -331,13 +337,24 @@ export const generateTailoredResume = async (
       }
     }
 
+    // Present keywords (for general optimization when no job description)
+    if (!hasJobDescription && analysisResult.job_keywords_detected) {
+      const presentKeywords = analysisResult.job_keywords_detected
+        .filter(item => item.status === 'Present')
+        .map(item => item.keyword);
+      
+      if (presentKeywords.length > 0) {
+        enhancedInstructions += `\n\nSTRENGTH KEYWORDS: Ensure these existing strengths are well-highlighted: ${presentKeywords.join(', ')}`;
+      }
+    }
+
     // General gaps and suggestions
     if (analysisResult.gaps_and_suggestions && analysisResult.gaps_and_suggestions.length > 0) {
       enhancedInstructions += `\n\nGENERAL IMPROVEMENTS: ${analysisResult.gaps_and_suggestions.join(', ')}`;
     }
   }
 
-  const prompt = `
+  const prompt = hasJobDescription ? `
     Act as an expert resume writing assistant. Based on the original resume and job description, generate a tailored, professional resume:
 
     ORIGINAL RESUME:
@@ -360,6 +377,40 @@ export const generateTailoredResume = async (
 - Strengthens weak statements with quantifiable results
 - Optimizes for ATS compatibility
 - Maintains a clear, coherent career narrative
+- Is completely truthful — do not fabricate anything
+
+
+**Formatting requirements**:
+- Use Markdown formatting for better presentation
+- Use ## for main section headers (e.g., ## PROFESSIONAL EXPERIENCE)
+- Use ### for subsection headers (e.g., ### Job Title at Company Name)
+- Use **bold** for emphasis on important details
+- Use bullet points (-) for achievements and responsibilities
+- Use proper line breaks and spacing for readability
+- Ensure the content is ATS-friendly when converted to plain text
+- Structure content logically with clear hierarchy
+  ` : `
+    Act as an expert resume writing assistant. Based on the original resume, generate an optimized, professional resume that follows best practices:
+    ORIGINAL RESUME:
+    ${resumeText}
+
+    ${enhancedInstructions}
+
+    Please provide a JSON response with the following structure:
+    {
+      "tailored_resume": "Complete tailored resume text here",
+      "improvements": ["improvement1", "improvement2", ...]
+    }
+
+    The optimized resume should:
+- Emphasizes strongest skills and most relevant experience
+- Uses industry-standard keywords and terminology
+- Restructures content for maximum impact and readability
+- Strengthens weak statements with quantifiable results
+- Optimizes for ATS compatibility
+- Maintains a clear, coherent career narrative
+- Follows modern resume best practices
+- Highlights unique value proposition
 - Is completely truthful — do not fabricate anything
 
 
@@ -421,6 +472,11 @@ export const generateCoverLetter = async (
 ): Promise<CoverLetterResult> => {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
+  }
+
+  // Cover letter requires a job description
+  if (!jobDescription || jobDescription.trim().length === 0) {
+    throw new Error('Job description is required to generate a cover letter');
   }
 
   // Build enhanced instructions based on analysis results
